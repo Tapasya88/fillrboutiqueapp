@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "296240715203",
+    "project_id": "fillr-boutiqueapp",
+    "storage_bucket": "fillr-boutiqueapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:296240715203:android:c0b002279b3182551f5976",
+        "android_client_info": {
+          "package_name": "com.fillr.boutiqueapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7h9HgDLcXgeNDSnmJ8Kqp4I-Nh6MPUBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

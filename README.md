@@ -164,4 +164,4 @@ Add `infoPlist` to `app.json`:
 
 ##  Contact
 
-For help, open an issue or message the maintainer at [email@email.com]
+For help, open an issue or message the maintainer at [mvtapasya@gmail.com]

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import auth from '@react-native-firebase/auth';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Image } from 'expo-image';
@@ -160,7 +161,7 @@ export default function OrdersTab() {
         clientSession.orders.push(orderToSave);
       }
 
-      await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+      await StorageService.setItem('@boutique_sessions', sessions);
       Alert.alert('Success', 'Order saved successfully!');
       setIsOrderModalVisible(false);
       setCurrentOrder(initialOrderState);
@@ -182,7 +183,7 @@ export default function OrdersTab() {
 
           if (clientSession && clientSession.orders) {
             clientSession.orders = clientSession.orders.filter(o => o.id !== orderId);
-            await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+            await StorageService.setItem('@boutique_sessions', sessions);
             loadOrders(); // Refresh the list
           }
         } catch (error) {
@@ -195,8 +196,12 @@ export default function OrdersTab() {
 
   const openOrderModal = (order?: Order) => {
     if (order) {
-      setCurrentOrder(order);
+      setCurrentOrder({
+        ...order,
+        designIds: order.designIds || [],
+      });
       setSelectedClientForOrder({ id: order.clientId, name: order.clientName });
+      loadClientSpecificData(order.clientId);
     } else {
       setCurrentOrder(initialOrderState);
       setSelectedClientForOrder(null);
@@ -249,7 +254,7 @@ export default function OrdersTab() {
           clientSession.designs = clientSession.designs || [];
           clientSession.designs.push(newDesign);
           
-          await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+          await StorageService.setItem('@boutique_sessions', sessions);
           
           setClientDesigns(prev => [...prev, newDesign]);
           
@@ -383,7 +388,7 @@ export default function OrdersTab() {
         }
       }
 
-      await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+      await StorageService.setItem('@boutique_sessions', sessions);
       loadOrders();
       loadClients();
       Alert.alert('Import Success', `${importedCount} orders were successfully imported.`);
@@ -417,9 +422,16 @@ export default function OrdersTab() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        {boutiqueInfo.iconUri && <Image source={{ uri: boutiqueInfo.iconUri }} style={styles.boutiqueIcon} contentFit="cover" />}
-        <Text style={styles.header}>{boutiqueInfo.name} - Orders</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.headerTitleContainer}>
+          {boutiqueInfo.iconUri && <Image source={{ uri: boutiqueInfo.iconUri }} style={styles.boutiqueIcon} contentFit="cover" />}
+          <Text style={styles.header}>{boutiqueInfo.name} - Orders</Text>
+        </View>
+        <TouchableOpacity style={styles.logoutBtn} onPress={async () => {
+          await auth().signOut();
+        }}>
+          <Ionicons name="log-out-outline" size={24} color="#ff4444" />
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.addOrderBtn} onPress={() => openOrderModal()}>
@@ -826,9 +838,11 @@ export default function OrdersTab() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#1a1a1a' },
-  headerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, paddingHorizontal: 15 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  headerTitleContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 },
+  logoutBtn: { padding: 5 },
   boutiqueIcon: { width: 32, height: 32, borderRadius: 16, marginRight: 10 },
-  header: { fontSize: 20, fontWeight: 'bold', color: 'white', textAlign: 'center', flexShrink: 1 },
+  header: { fontSize: 20, fontWeight: 'bold', color: 'white', flexShrink: 1 },
   addOrderBtn: { backgroundColor: '#6200ee', padding: 15, borderRadius: 10, marginBottom: 20, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   addOrderTxt: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginBottom: 20 },

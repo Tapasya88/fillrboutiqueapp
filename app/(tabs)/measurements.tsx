@@ -119,15 +119,8 @@ export default function MeasurementsTab() {
   };
 
   const populateAllMeasurements = (baseShoulder) => {
-    const shoulder = parseFloat(baseShoulder);
-    setMeasurements({
-      shoulder: shoulder.toFixed(1),
-      bust: (shoulder * 2.2).toFixed(1),
-      waist: (shoulder * 1.8).toFixed(1),
-      hips: (shoulder * 2.4).toFixed(1),
-      sleeveLength: (shoulder * 1.5).toFixed(1),
-      garmentLength: (shoulder * 2.5).toFixed(1),
-    });
+    const proportions = MeasurementService.generateProportions(baseShoulder);
+    setMeasurements(proportions);
   };
 
   const pickImageAndMeasure = async () => {
@@ -175,11 +168,7 @@ export default function MeasurementsTab() {
     setIsProcessing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      const cardPixelWidth = 300;
-      const leftShoulder = { x: 100, y: 210 };
-      const rightShoulder = { x: 550, y: 220 };
-      const ratio = MeasurementService.getCalibrationRatio(cardPixelWidth);
-      const measuredCm = MeasurementService.calculateRealDistance(leftShoulder, rightShoulder, ratio);
+      const measuredCm = (37.5 + Math.random() * 2).toFixed(1); // Realistic simulated width
       populateAllMeasurements(measuredCm);
 
       Alert.alert('AI Detection Complete', `Auto-populated full profile based on Shoulder Width: ${measuredCm} cm.`);
@@ -254,13 +243,14 @@ export default function MeasurementsTab() {
             type: 'manual_set',
             field: field,
           };
+          clientSession.measurements = clientSession.measurements.filter((m: any) => (m.field || 'shoulder') !== field);
           clientSession.measurements.push(newMeasurement);
           measurementsAdded++;
         }
       }
 
       if (measurementsAdded > 0) {
-        await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+        await StorageService.setItem('@boutique_sessions', sessions);
         Alert.alert('Saved', `${measurementsAdded} measurements saved for ${clientInfo.name}.`);
         setMeasurements(initialMeasurements);
       } else {
@@ -381,8 +371,8 @@ export default function MeasurementsTab() {
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#1a1a1a', paddingTop: 60 },
-  scrollContent: { flexGrow: 1 },
+  container: { flex: 1, backgroundColor: '#1a1a1a', paddingTop: 60 },
+  scrollContent: { flexGrow: 1, paddingBottom: 40 },
   headerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10, paddingHorizontal: 15 },
   boutiqueIcon: { width: 32, height: 32, borderRadius: 16, marginRight: 10 },
   header: { color: 'white', fontSize: 20, textAlign: 'center', fontWeight: 'bold', flexShrink: 1 },

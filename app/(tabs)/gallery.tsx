@@ -56,7 +56,7 @@ export default function GalleryTab() {
               session.designs = session.designs.filter(d => d.id !== designId);
             }
           });
-          await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+          await StorageService.setItem('@boutique_sessions', sessions);
           loadDesigns();
         } catch (error) {
           console.error('Error deleting design', error);
@@ -128,7 +128,7 @@ export default function GalleryTab() {
           imageUri: pendingImageUri,
           savedAt: new Date().toISOString(),
         });
-        await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+        await StorageService.setItem('@boutique_sessions', sessions);
         Alert.alert('Success', 'Image saved to client gallery.');
         setIsClientSelectionVisible(false);
         setPendingImageUri(null);

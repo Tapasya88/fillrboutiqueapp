@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { Redirect, Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -7,11 +8,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(user => {
-      setIsAuthenticated(!!user);
+    const subscriber = auth().onAuthStateChanged(async user => {
+      if (user) {
+        try {
+          const userDoc = await firestore().collection('users').doc(user.uid).get();
+          setIsAdmin(userDoc.data()?.role === 'Admin');
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+          setIsAdmin(false);
+        }
+        setIsAuthenticated(true);
+      } else {
+        setIsAdmin(false);
+        setIsAuthenticated(false);
+      }
     });
 
     // Unsubscribe on unmount
@@ -88,6 +102,7 @@ export default function TabLayout() {
         options={{
           title: 'Admin',
           tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={24} color={color} />,
+          href: isAdmin ? undefined : null,
         }}
       />
 

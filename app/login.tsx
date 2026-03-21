@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin@boutique.com');
+  const [password, setPassword] = useState('password123');
   const router = useRouter();
 
   const handleLogin = async () => {

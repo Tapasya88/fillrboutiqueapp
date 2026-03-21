@@ -161,7 +161,7 @@ export default function SketchTab() {
       };
       clientSession.designs = clientSession.designs || [];
       clientSession.designs.push(design);
-      await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+      await StorageService.setItem('@boutique_sessions', sessions);
       Alert.alert('Saved', 'Design saved to client gallery.');
     } catch (error) {
       console.error('Error saving design', error);
@@ -232,7 +232,7 @@ export default function SketchTab() {
       const localUri = `${FileSystem.documentDirectory}${fileName}`;
       
       let finalUri = localUri;
-      if (generatedImageUri.startsWith('data:image')) {
+      if (generatedImageUri.startsWith('data:')) {
         const base64Data = generatedImageUri.split(',')[1];
         await FileSystem.writeAsStringAsync(localUri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
       } else {
@@ -250,7 +250,7 @@ export default function SketchTab() {
       clientSession.designs = clientSession.designs || [];
       clientSession.designs.push({ id: `design_${Date.now()}`, imageUri: finalUri, savedAt: new Date().toISOString(), isAiGenerated: true, prompt: aiPrompt });
       
-      await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+      await StorageService.setItem('@boutique_sessions', sessions);
       Alert.alert('Saved', 'AI Design safely saved to client gallery.');
     } catch (error) {
       Alert.alert('Error', 'Failed to save the generated design.');

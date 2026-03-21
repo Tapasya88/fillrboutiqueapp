@@ -82,14 +82,24 @@ export default function CustomersTab() {
       const clientSessions = sessions.filter(s => s.name === client.name);
 
       // Load measurements for this client
-      const allMeasurements = clientSessions.flatMap(s => s.measurements || []);
+      let allMeasurements = clientSessions.flatMap(s => s.measurements || []);
       const lastMeasurement = await StorageService.getItem('last_measurement');
       if (lastMeasurement && lastMeasurement.sessionId && clientSessions.find(s => s.id === lastMeasurement.sessionId)) {
         if (!allMeasurements.some(m => m.timestamp === lastMeasurement.timestamp)) {
           allMeasurements.push(lastMeasurement);
         }
       }
-      setMeasurements(allMeasurements);
+
+      // Filter for latest measurements by field to avoid duplicates
+      const latestMeasurementsMap = new Map();
+      allMeasurements.forEach((m: any) => {
+        const fieldKey = m.field || 'shoulder'; // fallback for old manual inputs
+        const existing = latestMeasurementsMap.get(fieldKey);
+        if (!existing || new Date(m.timestamp) >= new Date(existing.timestamp)) {
+          latestMeasurementsMap.set(fieldKey, { ...m, field: fieldKey });
+        }
+      });
+      setMeasurements(Array.from(latestMeasurementsMap.values()));
 
       // Load designs for this client
       const allDesigns = clientSessions.flatMap(s => s.designs || []);
@@ -120,7 +130,7 @@ export default function CustomersTab() {
           designs: [],
         };
         sessions.push(newSession);
-        await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+        await StorageService.setItem('@boutique_sessions', sessions);
         loadClients();
       } else {
         Alert.alert('Exists', 'Customer already exists.');
@@ -137,7 +147,7 @@ export default function CustomersTab() {
         try {
           const sessions = await StorageService.loadAllSessions();
           const filteredSessions = sessions.filter(s => s.name !== clientName);
-          await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(filteredSessions));
+          await StorageService.setItem('@boutique_sessions', filteredSessions);
           loadClients();
           if (selectedClient?.name === clientName) setSelectedClient(null);
           setClientOrders([]); // Clear orders if client is deleted
@@ -176,7 +186,7 @@ export default function CustomersTab() {
           measurementTimestamp: selectedMeasurementTimestampForNewOrder,
         };
         clientSession.orders.push(orderToSave);
-        await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+        await StorageService.setItem('@boutique_sessions', sessions);
         
         setClientOrders(clientSession.orders);
         setIsCreateOrderModalVisible(false);
@@ -216,14 +226,14 @@ export default function CustomersTab() {
         const shoulderNum = parseFloat(measuredCm);
         const timestamp = new Date().toISOString();
 
-        const generatedMeasurements = [
-          { field: 'shoulder', value: shoulderNum.toFixed(1), timestamp, type: 'auto_image', imageUri: newUri },
-          { field: 'bust', value: (shoulderNum * 2.2).toFixed(1), timestamp, type: 'auto_image' },
-          { field: 'waist', value: (shoulderNum * 1.8).toFixed(1), timestamp, type: 'auto_image' },
-          { field: 'hips', value: (shoulderNum * 2.4).toFixed(1), timestamp, type: 'auto_image' },
-          { field: 'sleeveLength', value: (shoulderNum * 1.5).toFixed(1), timestamp, type: 'auto_image' },
-          { field: 'garmentLength', value: (shoulderNum * 2.5).toFixed(1), timestamp, type: 'auto_image' },
-        ];
+        const proportions = MeasurementService.generateProportions(shoulderNum);
+        const generatedMeasurements = Object.entries(proportions).map(([field, value]) => ({
+          field,
+          value: String(value),
+          timestamp,
+          type: 'auto_image',
+          ...(field === 'shoulder' ? { imageUri: newUri } : {})
+        }));
 
         const sessions = await StorageService.loadAllSessions();
         let clientSession = sessions.find(s => s.name === selectedClient.name);
@@ -232,10 +242,21 @@ export default function CustomersTab() {
           sessions.push(clientSession);
         }
         clientSession.measurements = clientSession.measurements || [];
+        
+        // Remove older duplicates
+        generatedMeasurements.forEach((newM: any) => {
+          clientSession.measurements = clientSession.measurements.filter((m: any) => (m.field || 'shoulder') !== newM.field);
+        });
         clientSession.measurements.push(...generatedMeasurements);
-        await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+        await StorageService.setItem('@boutique_sessions', sessions);
 
-        setMeasurements([...measurements, ...generatedMeasurements]);
+        setMeasurements((prev: any[]) => {
+          let updated = [...prev];
+          generatedMeasurements.forEach((newM: any) => {
+            updated = updated.filter(m => (m.field || 'shoulder') !== newM.field);
+          });
+          return [...updated, ...generatedMeasurements];
+        });
         Alert.alert('Measurements Added', `Auto-populated full profile based on Shoulder: ${measuredCm} cm`);
       } catch (error) {
         console.error('Error measuring from image', error);
@@ -255,9 +276,13 @@ export default function CustomersTab() {
       value: parseFloat(manualMeasurement),
       timestamp: new Date().toISOString(),
       type: 'manual',
+      field: 'shoulder', // explicitly set field
     };
     await saveMeasurement(newMeasurement);
-    setMeasurements([...measurements, newMeasurement]);
+    setMeasurements((prev: any[]) => {
+      const updated = prev.filter(m => (m.field || 'shoulder') !== 'shoulder');
+      return [...updated, newMeasurement];
+    });
     setManualMeasurement('');
     setModalVisible(false);
   };
@@ -276,8 +301,9 @@ export default function CustomersTab() {
         sessions.push(clientSession);
       }
       clientSession.measurements = clientSession.measurements || [];
+      clientSession.measurements = clientSession.measurements.filter((m: any) => (m.field || 'shoulder') !== measurement.field);
       clientSession.measurements.push(measurement);
-      await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+      await StorageService.setItem('@boutique_sessions', sessions);
     } catch (error) {
       console.error('Error saving measurement', error);
     }
@@ -298,7 +324,7 @@ export default function CustomersTab() {
               const index = clientSession.measurements.findIndex(m => m.timestamp === measurement.timestamp);
               if (index !== -1) {
                 clientSession.measurements[index] = measurement;
-                await AsyncStorage.setItem('@boutique_sessions', JSON.stringify(sessions));
+                await StorageService.setItem('@boutique_sessions', sessions);
                 setMeasurements([...measurements]); // Refresh
               }
             }

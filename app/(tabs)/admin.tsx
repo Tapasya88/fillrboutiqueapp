@@ -9,6 +9,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StorageService } from '../../src/StorageService';
 
 export default function AdminTab() {
   const [users, setUsers] = useState<any[]>([]);

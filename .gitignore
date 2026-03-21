@@ -42,6 +42,7 @@ app-example
 /ios
 /android
 
-# Firebase config
+# Firebase config files
 google-services.json
 GoogleService-Info.plist
+credentials.json

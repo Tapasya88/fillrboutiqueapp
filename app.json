@@ -11,7 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fillr.boutiqueapp",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,6 +26,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.fillr.boutiqueapp",
+      "versionCode": 1,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
@@ -54,6 +58,12 @@
       "eas": {
         "projectId": "0c7a98dc-1afe-4ea4-a57f-a8ce46ccfb07"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0c7a98dc-1afe-4ea4-a57f-a8ce46ccfb07"
     }
   }
 }

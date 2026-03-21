@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 18.3.0",
+    "version": ">= 9.0.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -11,11 +11,27 @@
     "preview": {
       "distribution": "internal"
     },
+    "preview-apk": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "production": {
+      "channel": "production",
       "autoIncrement": true
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "YOUR_APPLE_ID@domain.com",
+        "ascAppId": "YOUR_APP_STORE_CONNECT_ID",
+        "appleTeamId": "YOUR_APPLE_TEAM_ID"
+      },
+      "android": {
+        "track": "production",
+        "releaseStatus": "completed"
+      }
+    }
   }
 }
